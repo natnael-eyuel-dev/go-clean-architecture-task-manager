@@ -28,14 +28,15 @@ type User struct {
 type Credentials struct {
 	Username 	 string              // login username 
     Password 	 string 	         // login password 
+
 }
 
 // task repository interface 
 type TaskRepository interface {
 	CreateTask(task *Task) (*Task, error)                     // create new task with validation
-	DeleteTask(taskID string) error                 		  // delete existing task or return error if not found
-	GetAllTasks() ([]Task, error)         					  // get all tasks in the system
-	GetTaskByID(taskID string) (*Task, error) 				  // get specific task by id or return error if not found
+	DeleteTask(taskID string) error                           // delete existing task or return error if not found
+	GetAllTasks() ([]Task, error)         			  // get all tasks in the system
+	GetTaskByID(taskID string) (*Task, error) 		  // get specific task by id or return error if not found
 	UpdateTask(taskID string, task *Task) (*Task, error)      // update existing task or return error if not found
 }
 
