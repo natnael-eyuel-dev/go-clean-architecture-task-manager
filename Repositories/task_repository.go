@@ -2,31 +2,46 @@ package repositories
 
 // imports
 import (
-	"context";
-	"errors";
-	"time";
-	"go.mongodb.org/mongo-driver/bson";
-	"go.mongodb.org/mongo-driver/bson/primitive";
-	"go.mongodb.org/mongo-driver/mongo";
-	"go.mongodb.org/mongo-driver/mongo/options";
-	"github.com/natnael-eyuel-dev/Task-Management-Clean-Architecture/Domain";
+	"context"
+	"errors"
+	"log"
+	"time"
+
+	"github.com/natnael-eyuel-dev/Task-Management-Clean-Architecture/Domain"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type taskRepository struct {
-	collection *mongo.Collection
+type TaskRepository struct {
+	Collection *mongo.Collection
 }
 
-func NewTaskRepository(col *mongo.Collection) domain.TaskRepository {
-	return &taskRepository{collection: col}
+func NewTaskRepository() domain.TaskRepository {
+	// setup mongodb
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)       // set timeout
+	defer cancel()
+
+	// connect
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db := client.Database("taskmanager")
+	taskCol := db.Collection("tasks")  
+	       // initialize task collection
+	return &TaskRepository{Collection: taskCol}
 }
 
-func (taskRepo *taskRepository) CreateTask(task *domain.Task) (*domain.Task, error) {
+func (taskRepo *TaskRepository) CreateTask(task *domain.Task) (*domain.Task, error) {
 	
 	contx, cancel := context.WithTimeout(context.Background(), 5*time.Second)     // set timeout
 	defer cancel()
 
-	task.ID = primitive.NewObjectID()                         // create a unique id for the new task
-	_, err := taskRepo.collection.InsertOne(contx, task)      // create the new task with error handling
+	task.ID = primitive.NewObjectID().Hex()                   // create a unique id for the new task
+	_, err := taskRepo.Collection.InsertOne(contx, task)      // create the new task with error handling
 	if err != nil {
         return nil, err
     }
@@ -34,7 +49,7 @@ func (taskRepo *taskRepository) CreateTask(task *domain.Task) (*domain.Task, err
 	return task, nil       // return the new created task and nil
 }
 
-func (taskRepo *taskRepository) DeleteTask(taskID string) error {
+func (taskRepo *TaskRepository) DeleteTask(taskID string) error {
 	
 	contx, cancel := context.WithTimeout(context.Background(), 5*time.Second)        // set timeout
 	defer cancel()
@@ -44,7 +59,7 @@ func (taskRepo *taskRepository) DeleteTask(taskID string) error {
 		return domain.ErrInvalidTaskID
 	}
 
-	result, err := taskRepo.collection.DeleteOne(contx, bson.M{"_id": objID})       // delete the task with error handling
+	result, err := taskRepo.Collection.DeleteOne(contx, bson.M{"_id": objID})       // delete the task with error handling
 	if err != nil {
 		return err
 	}
@@ -57,13 +72,13 @@ func (taskRepo *taskRepository) DeleteTask(taskID string) error {
 	return nil
 }
 
-func (taskRepo *taskRepository) GetAllTasks() ([]domain.Task, error) {
+func (taskRepo *TaskRepository) GetAllTasks() ([]domain.Task, error) {
 	
 	var allTasks []domain.Task
 	contx, cancel := context.WithTimeout(context.Background(), 5*time.Second)        // set timeout
 	defer cancel()
 
-	cursor, err := taskRepo.collection.Find(contx, bson.M{})      // find all documents in the collection
+	cursor, err := taskRepo.Collection.Find(contx, bson.M{})      // find all documents in the collection
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +97,7 @@ func (taskRepo *taskRepository) GetAllTasks() ([]domain.Task, error) {
 	return allTasks, nil
 }
 
-func (taskRepo *taskRepository) GetTaskByID(taskID string) (*domain.Task, error) {
+func (taskRepo *TaskRepository) GetTaskByID(taskID string) (*domain.Task, error) {
 	
 	var task domain.Task
 	contx, cancel := context.WithTimeout(context.Background(), 5*time.Second)        // set timeout
@@ -93,7 +108,7 @@ func (taskRepo *taskRepository) GetTaskByID(taskID string) (*domain.Task, error)
 		return nil, domain.ErrInvalidTaskID
 	}
 
-	err = taskRepo.collection.FindOne(contx, bson.M{"_id": objID}).Decode(&task)       // check if task exists
+	err = taskRepo.Collection.FindOne(contx, bson.M{"_id": objID}).Decode(&task)       // check if task exists
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, domain.ErrTaskNotFound
@@ -104,7 +119,7 @@ func (taskRepo *taskRepository) GetTaskByID(taskID string) (*domain.Task, error)
 	return &task, nil
 }
 
-func (taskRepo *taskRepository) UpdateTask(taskID string, taskUpdate *domain.Task) (*domain.Task, error) {
+func (taskRepo *TaskRepository) UpdateTask(taskID string, taskUpdate *domain.Task) (*domain.Task, error) {
 	
 	var updatedTask domain.Task
 	contx, cancel := context.WithTimeout(context.Background(), 5*time.Second)        // set timeout
@@ -141,7 +156,7 @@ func (taskRepo *taskRepository) UpdateTask(taskID string, taskUpdate *domain.Tas
 		SetReturnDocument(options.After)
 
 	// perform update and get the updated task
-	err = taskRepo.collection.FindOneAndUpdate(
+	err = taskRepo.Collection.FindOneAndUpdate(
 		contx,
 		bson.M{"_id": objID},
 		update,

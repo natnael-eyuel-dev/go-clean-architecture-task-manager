@@ -7,26 +7,17 @@ import (
 	"github.com/natnael-eyuel-dev/Task-Management-Clean-Architecture/Domain";
 )
 
-// task usecase
-type TaskUseCase interface {
-	CreateTask(task *domain.Task) (*domain.Task, error)                     // create new task with validation
-	DeleteTask(taskID string) error                 					    // delete existing task or return error if not found
-	GetAllTasks() ([]domain.Task, error)         					        // get all tasks in the system
-	GetTaskByID(taskID string) (*domain.Task, error) 					    // get specific task by id or return error if not found
-	UpdateTask(taskID string, task *domain.Task) (*domain.Task, error)      // update existing task or return error if not found
-}
-
-type taskUseCase struct {
-	taskRepo domain.TaskRepository
+type TaskUseCase struct {
+	TaskRepository domain.TaskRepository
 }
 
 // creates new TaskUseCase instance
-func NewTaskUseCase(repo domain.TaskRepository) TaskUseCase {
-	return &taskUseCase{taskRepo: repo}
+func NewTaskUseCase(taskRepo domain.TaskRepository) domain.TaskUseCase {
+	return &TaskUseCase{TaskRepository: taskRepo}
 }
 
 // create a task
-func (taskUsc *taskUseCase) CreateTask(task *domain.Task) (*domain.Task, error) {
+func (taskUsc *TaskUseCase) CreateTask(task *domain.Task) (*domain.Task, error) {
 	
 	// validate task fields before creation
 	if task.Title == "" {
@@ -55,18 +46,18 @@ func (taskUsc *taskUseCase) CreateTask(task *domain.Task) (*domain.Task, error) 
 		return nil, errors.New("invalid task status")
 	}
 
-	return taskUsc.taskRepo.CreateTask(task)
+	return taskUsc.TaskRepository.CreateTask(task)
 }
 
 // remove task by its id
-func (taskUsc *taskUseCase) DeleteTask(id string) error {
+func (taskUsc *TaskUseCase) DeleteTask(id string) error {
 	
 	// validate id field 
 	if id == "" {
 		return errors.New("task ID cannot be empty")
 	}
 	// verify task exists first
-	_, err := taskUsc.taskRepo.GetTaskByID(id)
+	_, err := taskUsc.TaskRepository.GetTaskByID(id)
 	if err != nil {
 		if err == domain.ErrTaskNotFound {
 			return domain.ErrTaskNotFound
@@ -74,13 +65,13 @@ func (taskUsc *taskUseCase) DeleteTask(id string) error {
 		return err
 	}
 
-	return taskUsc.taskRepo.DeleteTask(id)
+	return taskUsc.TaskRepository.DeleteTask(id)
 }
 
 // get all tasks 
-func (taskUsc *taskUseCase) GetAllTasks() ([]domain.Task, error) {
+func (taskUsc *TaskUseCase) GetAllTasks() ([]domain.Task, error) {
 	
-	tasks, err := taskUsc.taskRepo.GetAllTasks()
+	tasks, err := taskUsc.TaskRepository.GetAllTasks()
 	if err != nil {
 		return nil, err
 	}
@@ -93,14 +84,14 @@ func (taskUsc *taskUseCase) GetAllTasks() ([]domain.Task, error) {
 }
 
 // find task by its id
-func (taskUsc *taskUseCase) GetTaskByID(id string) (*domain.Task, error) {
+func (taskUsc *TaskUseCase) GetTaskByID(id string) (*domain.Task, error) {
 	
 	// validate id field 
 	if id == "" {
 		return nil, errors.New("task ID cannot be empty")
 	}
 
-	task, err := taskUsc.taskRepo.GetTaskByID(id)
+	task, err := taskUsc.TaskRepository.GetTaskByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +103,7 @@ func (taskUsc *taskUseCase) GetTaskByID(id string) (*domain.Task, error) {
 }
 
 // update task by its id
-func (taskUsc *taskUseCase) UpdateTask(id string, task *domain.Task) (*domain.Task, error) {
+func (taskUsc *TaskUseCase) UpdateTask(id string, task *domain.Task) (*domain.Task, error) {
 	
 	// validate id field 
 	if id == "" {
@@ -139,5 +130,5 @@ func (taskUsc *taskUseCase) UpdateTask(id string, task *domain.Task) (*domain.Ta
 		return nil, errors.New("due date must be in the future")
 	}
 
-	return taskUsc.taskRepo.UpdateTask(id, task)
+	return taskUsc.TaskRepository.UpdateTask(id, task)
 }

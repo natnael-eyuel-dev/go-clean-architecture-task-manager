@@ -4,29 +4,21 @@ package usecases
 import (
 	"errors";
 	"github.com/natnael-eyuel-dev/Task-Management-Clean-Architecture/Domain";
-	"go.mongodb.org/mongo-driver/bson/primitive";
 )
 
-// user usecase
-type UserUseCase interface {
-	Register(user *domain.User) error
-	Login(credentials *domain.Credentials) (string, *domain.User, error)
-	PromoteToAdmin(userID string) error
-}
-
-type userUseCase struct {
-	userRepo     domain.UserRepository
-	jwtService  domain.JWTService
-	pwdService   domain.PasswordService
+type UserUseCase struct {
+	UserRepository     domain.UserRepository
+	JWTService         domain.JWTService
+	PwdService         domain.PasswordService
 }
 
 // creates new UserUseCase instance
-func NewUserUseCase(userRepo domain.UserRepository, jwtServ domain.JWTService, pwdServ domain.PasswordService,) UserUseCase {
-	return &userUseCase{ userRepo:userRepo, jwtService:jwtServ, pwdService:pwdServ}
+func NewUserUseCase(userRepo domain.UserRepository, jwtServ domain.JWTService, pwdServ domain.PasswordService,) domain.UserUseCase {
+	return &UserUseCase{ UserRepository:userRepo, JWTService:jwtServ, PwdService:pwdServ}
 }
 
 // register user
-func (userUsc *userUseCase) Register(user *domain.User) error {
+func (userUsc *UserUseCase) Register(user *domain.User) error {
 	
 	// validate input
 	if user.Username == "" {
@@ -39,7 +31,7 @@ func (userUsc *userUseCase) Register(user *domain.User) error {
 		return errors.New("password must be at least 8 characters")
 	}
 	// check if user already exists
-	existing, err := userUsc.userRepo.GetByUsername(user.Username)
+	existing, err := userUsc.UserRepository.GetByUsername(user.Username)
 	if err != nil && err != domain.ErrUserNotFound {
 		return err
 	}
@@ -48,7 +40,7 @@ func (userUsc *userUseCase) Register(user *domain.User) error {
 	}
 
 	// hash password securely 
-	hashed, err := userUsc.pwdService.HashPassword(user.Password)
+	hashed, err := userUsc.PwdService.HashPassword(user.Password)
 	if err != nil {
 		return err
 	}
@@ -58,7 +50,7 @@ func (userUsc *userUseCase) Register(user *domain.User) error {
 	user.Role = "user"
 
 	// first user becomes admin
-	count, err := userUsc.userRepo.GetUserCount()
+	count, err := userUsc.UserRepository.GetUserCount()
 	if err != nil {
 		return err
 	}
@@ -66,11 +58,11 @@ func (userUsc *userUseCase) Register(user *domain.User) error {
 		user.Role = "admin"
 	}
 
-	return userUsc.userRepo.CreateUser(user)
+	return userUsc.UserRepository.CreateUser(user)
 }
 
 // authenticate user
-func (userUsc *userUseCase) Login(credentials *domain.Credentials) (string, *domain.User, error) {
+func (userUsc *UserUseCase) Login(credentials *domain.Credentials) (string, *domain.User, error) {
 	
 	// validate input
 	if credentials.Username == "" || credentials.Password == "" {
@@ -78,7 +70,7 @@ func (userUsc *userUseCase) Login(credentials *domain.Credentials) (string, *dom
 	}
 
 	// get user from repository
-	user, err := userUsc.userRepo.GetByUsername(credentials.Username)
+	user, err := userUsc.UserRepository.GetByUsername(credentials.Username)
 	if err != nil {
 		if err == domain.ErrUserNotFound {
 			return "", nil, domain.ErrInvalidCredentials
@@ -87,12 +79,12 @@ func (userUsc *userUseCase) Login(credentials *domain.Credentials) (string, *dom
 	}
 
 	// verify password
-	if !userUsc.pwdService.CheckPassword(user.Password, credentials.Password) {
+	if !userUsc.PwdService.CheckPassword(user.Password, credentials.Password) {
 		return "", nil, domain.ErrInvalidCredentials
 	}
 
 	// generate jwt token
-	token, err := userUsc.jwtService.GenerateToken(user.ID.Hex(), user.Username, user.Role)
+	token, err := userUsc.JWTService.GenerateToken(user.ID, user.Username, user.Role)
 	if err != nil {
 		return "", nil, err
 	}
@@ -108,20 +100,15 @@ func (userUsc *userUseCase) Login(credentials *domain.Credentials) (string, *dom
 }
 
 // promote a user to admin role (only admin can do this)
-func (userUsc *userUseCase) PromoteToAdmin(userID string) error {
+func (userUsc *UserUseCase) PromoteToAdmin(userID string) error {
 	
 	// validate input
 	if userID == "" {
 		return errors.New("user ID cannot be empty")
 	}
 
-	objID, err := primitive.ObjectIDFromHex(userID)        // convert string id to ObjectID
-	if err != nil {
-		return domain.ErrInvalidUserID
-	}
-
 	// check if user exists
-	_, err = userUsc.userRepo.GetUserById(objID)
+	_, err := userUsc.UserRepository.GetUserById(userID)
 	if err != nil {
 		if err == domain.ErrUserNotFound {
 			return domain.ErrUserNotFound
@@ -130,5 +117,5 @@ func (userUsc *userUseCase) PromoteToAdmin(userID string) error {
 	}
 
 	// update role
-	return userUsc.userRepo.UpdateRole(objID, "admin")
+	return userUsc.UserRepository.UpdateRole(userID, "admin")
 }

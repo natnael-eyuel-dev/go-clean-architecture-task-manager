@@ -6,11 +6,10 @@ import (
 	"github.com/natnael-eyuel-dev/Task-Management-Clean-Architecture/Delivery/controllers";
 	"github.com/natnael-eyuel-dev/Task-Management-Clean-Architecture/Domain";
 	"github.com/natnael-eyuel-dev/Task-Management-Clean-Architecture/Infrastructure";
-	"github.com/natnael-eyuel-dev/Task-Management-Clean-Architecture/Usecases";
 )
 
 // setup router
-func SetupRouter( taskUsc usecases.TaskUseCase, userUsc usecases.UserUseCase, jwtServ domain.JWTService) *gin.Engine {
+func SetupRouter( taskUsc domain.TaskUseCase, userUsc domain.UserUseCase, jwtServ domain.JWTService) *gin.Engine {
 
 	router := gin.Default()     // create default gin router
 

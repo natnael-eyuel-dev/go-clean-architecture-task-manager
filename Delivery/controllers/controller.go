@@ -6,27 +6,25 @@ import (
 	"strings";
 	"github.com/gin-gonic/gin";
 	"github.com/natnael-eyuel-dev/Task-Management-Clean-Architecture/Domain";
-	"github.com/natnael-eyuel-dev/Task-Management-Clean-Architecture/Usecases";
-	"go.mongodb.org/mongo-driver/bson/primitive";
 )
 
 // task controller
 type TaskController struct {
-	taskUseCase usecases.TaskUseCase        // task usecase for task operations
+	taskUseCase domain.TaskUseCase        // task usecase for task operations
 }
 
 // user controller
 type UserController struct {
-	userUseCase usecases.UserUseCase        // user usecase for user operations 
+	userUseCase domain.UserUseCase        // user usecase for user operations 
 }
 
 // new task controller
-func NewTaskController(uc usecases.TaskUseCase) *TaskController {
+func NewTaskController(uc domain.TaskUseCase) *TaskController {
 	return &TaskController{taskUseCase: uc}        // return new task controller instance
 }
 
 // new user controller
-func NewUserController(uc usecases.UserUseCase) *UserController {
+func NewUserController(uc domain.UserUseCase) *UserController {
 	return &UserController{userUseCase: uc}        // return new user controller instance
 }
 
@@ -63,14 +61,8 @@ func (taskContr *TaskController) DeleteTask(c *gin.Context) {
 	
 	id := c.Param("id")       // get task id from request parameter
 
-	_, err := primitive.ObjectIDFromHex(id)       // validate it is a valid ObjectID 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID format"})
-		return
-	}
-
 	// delete task through usecase layer
-	err = taskContr.taskUseCase.DeleteTask(id)
+	err := taskContr.taskUseCase.DeleteTask(id)
 	if err != nil {
 		if err == domain.ErrTaskNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -104,12 +96,6 @@ func (taskContr *TaskController) GetTaskByID(c *gin.Context) {
 	
 	id := c.Param("id")        // get task id from request parameter
 
-	_, err := primitive.ObjectIDFromHex(id)      // validate it is a valid ObjectID
-	if err != nil {      
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID format"})
-		return
-	}
-
 	// get specific task through usecase layer
 	task, err := taskContr.taskUseCase.GetTaskByID(id)
 	if err != nil {
@@ -128,14 +114,8 @@ func (taskContr *TaskController) UpdateTask(c *gin.Context) {
 	
 	id := c.Param("id")       // get task id from request parameter
 
-	_, err := primitive.ObjectIDFromHex(id)        // validate it is a valid ObjectID
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid task ID format"})
-		return
-	}
-
 	var task domain.Task
-	err = c.ShouldBindJSON(&task)       // parse request body into task struct
+	err := c.ShouldBindJSON(&task)       // parse request body into task struct
 	if err != nil {
 		// handle specific date format error case
 		if strings.Contains(err.Error(), "numeric literal") {
@@ -222,14 +202,8 @@ func (uc *UserController) PromoteToAdmin(c *gin.Context) {
 	
 	userID := c.Param("id")       // get user id from request parameter
 	 
-	_, err := primitive.ObjectIDFromHex(userID)       // validate it is a valid ObjectID
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
-		return
-	}
-
 	// promote user through usecase layer
-	err = uc.userUseCase.PromoteToAdmin(userID) 
+	err := uc.userUseCase.PromoteToAdmin(userID) 
 	if err != nil {
 		if err == domain.ErrUserNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})

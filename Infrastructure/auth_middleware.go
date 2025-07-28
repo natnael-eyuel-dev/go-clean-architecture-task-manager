@@ -9,11 +9,11 @@ import (
 )
 
 type AuthMiddleWare struct {
-	jwtService domain.JWTService
+	JWTService domain.JWTService
 }
 
 func NewAuthMiddleware(jwtServ domain.JWTService) *AuthMiddleWare {
-	return &AuthMiddleWare{jwtService: jwtServ}
+	return &AuthMiddleWare{JWTService: jwtServ}
 }
 
 // auth handler
@@ -30,7 +30,7 @@ func (authmidlw *AuthMiddleWare) Handler() gin.HandlerFunc {
 		}
 		
 		// validate token structure/signature with error handling 
-		token, err := authmidlw.jwtService.ValidateToken(tokenStr)     
+		token, err := authmidlw.JWTService.ValidateToken(tokenStr)     
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			c.Abort()
