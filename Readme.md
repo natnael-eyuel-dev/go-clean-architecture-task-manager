@@ -1,59 +1,64 @@
-## Fundamentals of Go Tasks: Task 7 - Refactoring Task Management API using Clean Architecture Principles
+# Go Gin Task Manager API (Clean Architecture)
 
-## Natnael Eyuel - A2SV G62
+A clean-architecture iteration of the Task Manager API focused on maintainability, testability, and scalability through strict dependency boundaries.
 
-## Overview
-A refactored task management system following Clean Architecture principles to improve maintainability, testability, and scalability.
+## Phase Position
 
-## Key Features
-- JWT Authentication
-- Role-based access control (Admin/User)
-- CRUD operations for tasks
-- MongoDB persistence
+- **A2SV Go Phase:** Task 7 (Architecture Maturity)
+- **Previous Project:** `go-gin-task-manager-api-jwt-rbac`
+- **Next Project:** `go-gin-task-manager-api-testing`
+- **Program Milestone:** Architecture refactor before dedicated testing and CI hardening
 
-## Architecture
+## Features
+
+- Clean Architecture layering
+- JWT authentication and authorization
+- Role-based access control
+- Task CRUD operations with MongoDB persistence
+- API documentation in `docs/`
+
+## Tech Stack
+
+- Go
+- Gin
+- MongoDB
+- JWT
+
+## Project Structure
+
+```text
+.
+├── Delivery/        # HTTP handlers and route entry points
+├── Domain/          # Entities and interface contracts
+├── Infrastructure/  # Cross-cutting concerns (JWT, hashing, config)
+├── Repositories/    # Concrete data implementations
+├── Usecases/        # Business rules and orchestration
+├── docs/
+├── .gitignore
+├── go.mod
+├── go.sum
+└── Readme.md
 ```
-task-manager/
-├── Delivery/        # HTTP handlers (Gin)
-├── Domain/          # Entities and interfaces
-├── Infrastructure/  # JWT, Hashing, Config
-├── Repositories/    # MongoDB implementations
-└── Usecases/        # Business logic
-```
 
-## Setup
+## Run
 
-### Prerequisites
-- Go installed
-- MongoDB installed
-
-### Installation
 ```bash
-go get .
-```
-
-### Configuration
-1. Create `.env` file:
-```env
-JWT_SECRET=your_secret_key
-```
-
-### Running
-```bash
+go mod tidy
 go run Delivery/main.go
 ```
 
-## API Documentation
-See [API_DOCS.md](/docs/api_documentation.md) for endpoint specifications.
+## Documentation
+
+- API documentation: `docs/api_documentation.md`
 
 ## Key Design Decisions
-1. **Dependency Rule**:  
-   Outer layers (Delivery/Infra) depend inward on interfaces defined in Domain.
 
-2. **Validation**:  
-   Business rules enforced in Use Case layer.
+- **Dependency Rule:** Outer layers depend inward via domain interfaces
+- **Use Case Validation:** Business constraints enforced in use case layer
+- **Framework Isolation:** Delivery details separated from core domain logic
 
+## Learning Outcomes
 
-
- 
-
+- Applying clean architecture in real backend services
+- Isolating business logic from transport and infra concerns
+- Building a production-ready API foundation in Go
